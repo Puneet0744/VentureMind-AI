@@ -1,0 +1,75 @@
+# =========================
+# 🔐 ENV & SECRETS
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# 🐍 PYTHON
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# =========================
+# 📦 NODE / REACT
+# =========================
+node_modules/
+dist/
+build/
+.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# 🧠 LANGCHAIN / TEMP FILES
+# =========================
+*.log
+*.jsonl
+*.tmp
+
+# =========================
+# 🧾 IDE / EDITOR FILES
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# =========================
+# 📁 TEST / OUTPUT FILES
+# =========================
+output/
+results/
+temp/
+
+# =========================
+# 🔥 APIFY / SCRAPER CACHE
+# =========================
+.apify_storage/
+apify_storage/
+
+# =========================
+# 🧪 JUPYTER (if used)
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# ⚙️ SYSTEM FILES
+# =========================
+*.lock
