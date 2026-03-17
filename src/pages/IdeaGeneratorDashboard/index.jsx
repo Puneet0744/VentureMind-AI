@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../../services/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ResultCard from '../../components/ResultCard';
@@ -115,7 +115,6 @@ export default function IdeaGeneratorDashboard() {
           className="text-center mb-10"
         >
           <div className="inline-flex items-center gap-2 glass-card px-4 py-1.5 text-xs text-brand-300 font-medium mb-4">
-            <Zap size={12} />
             <span>Idea Generator Dashboard</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">
@@ -210,7 +209,6 @@ export default function IdeaGeneratorDashboard() {
               disabled={loading}
               className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <Zap size={16} />
               {loading ? 'Generating...' : 'Generate Startup Idea'}
             </button>
           </div>
