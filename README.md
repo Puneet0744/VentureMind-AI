@@ -1,7 +1,3 @@
-Got it 👍 — you want a **clean, practical README focused ONLY on running the project**, not all the fancy explanation.
-
-Here’s a **simple, execution-focused README.md** you can use:
-
 ---
 
 # 🚀 README.md (Run Instructions)
