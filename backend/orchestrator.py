@@ -1,9 +1,13 @@
+import sys
 from scrape import scrape_website
 from idea_generator import idea_generator
-from analysis import analyze_startup
+from analysis import analyze_user_idea, analyze_user_idea
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 
-# 🔥 Smart keyword selector
+# Smart keyword selector
 def select_best_keyword(keywords):
     # Sort by length (longer = more meaningful)
     keywords = sorted(keywords, key=lambda x: len(x), reverse=True)
@@ -16,10 +20,24 @@ def select_best_keyword(keywords):
     return keywords[0]  # fallback
 
 
+def build_user_query(idea_name, description, industry=None, target_customers=None, business_model=None):
+    parts = [f"{idea_name}", description]
+    if industry:
+        parts.append(industry)
+    if target_customers:
+        parts.append(target_customers)
+    if business_model:
+        parts.append(business_model)
+
+    return " ".join(parts)
+
+
+# Note: old idea validator pipeline path is removed in favor of the new external validator module.
+# Existing /validate-idea route now uses analyze_user_idea() from backend.analysis, which prioritizes validator/idea-validator.py.
 def run_pipeline(domain):
 
     try:
-        print("\n🚀 NEW PIPELINE RUN\n")
+        print("\nNEW PIPELINE RUN\n")
 
         # =========================
         # STEP 1: IDEA GENERATION
@@ -31,7 +49,7 @@ def run_pipeline(domain):
             return {"error": "No ideas generated"}
 
         first_idea = idea_data["ideas"][0]
-        print("\n✅ Selected Idea:\n", first_idea)
+        print("\nSelected Idea:\n", first_idea)
 
 
         # =========================
@@ -45,7 +63,7 @@ def run_pipeline(domain):
         else:
             search_query = f"{first_idea['name']} startup competitors"
 
-        print("🔍 Final Search Query:", search_query)
+        print("Final Search Query:", search_query)
 
 
         # =========================
@@ -55,17 +73,17 @@ def run_pipeline(domain):
         scraped_data = scrape_website(search_query, mode="QUERY")
 
         # Debug preview
-        print("\n🧾 Scraped Data Preview:\n", str(scraped_data)[:200])
+        print("\nScraped Data Preview:\n", str(scraped_data)[:200])
 
         # Handle weak scraping
         if not scraped_data or len(scraped_data) < 200:
-            print("⚠️ Scraper returned weak data. Using fallback.")
+            print("Scraper returned weak data. Using fallback.")
             scraped_data = f"General market analysis of {search_query}"
 
         # Limit size (IMPORTANT)
         scraped_data = str(scraped_data)[:10000]
 
-        print("📏 Scraped Data Length:", len(scraped_data))
+        print("Scraped Data Length:", len(scraped_data))
 
 
         # =========================

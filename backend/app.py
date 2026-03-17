@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from idea_generator import idea_generator
-from orchestrator import run_pipeline   # ✅ NEW
+from orchestrator import run_pipeline
+from analysis import analyze_user_idea
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"])
@@ -10,7 +11,7 @@ CORS(app, origins=["http://localhost:5173"])
 
 @app.route("/")
 def home():
-    return "🚀 AI Startup Generator Backend Running"
+    return "AI Startup Generator Backend Running"
 
 
 # 🔹 OLD (keep for testing/debugging)
@@ -40,7 +41,7 @@ def generate_startup():
         if not domain:
             return jsonify({"error": "Industry/domain is required"}), 400
 
-        print("\n🚀 NEW REQUEST RECEIVED")
+        print("\nNEW REQUEST RECEIVED")
         print("Domain:", domain)
 
         result = run_pipeline(domain)
@@ -102,32 +103,46 @@ def validate_idea():
         idea_name = data.get("idea_name") or data.get("name") or ""
         description = data.get("description") or data.get("idea") or ""
         industry = data.get("industry") or ""
+        target_customers = data.get("target_customers") or data.get("targetCustomer") or ""
+        business_model = data.get("business_model") or data.get("businessModel") or ""
 
         if not idea_name or not description:
             return jsonify({"error": "Idea name and description are required"}), 400
 
-        validation_source = industry or idea_name
+        analysis = analyze_user_idea(
+            idea_name=idea_name,
+            description=description,
+            industry=industry,
+            target_customers=target_customers,
+            business_model=business_model,
+            scraped_data=None,
+        )
 
-        circuit = run_pipeline(validation_source)
-        if "error" in circuit:
-            return jsonify(circuit), 500
-
-        analysis = circuit.get("analysis", {})
+        if isinstance(analysis, dict) and analysis.get("error"):
+            return jsonify(analysis), 500
 
         return jsonify({
-            "idea_summary": {
+            "idea_summary": analysis.get("idea_summary", {
                 "name": idea_name,
                 "description": description,
                 "industry": industry,
-            },
-            "market_study": analysis.get("market_insights") or analysis.get("market_study") or analysis,
-            "competitors": analysis.get("competitors") or circuit.get("selected_idea", {}).get("search_keywords") or [],
-            "revenue_model": circuit.get("selected_idea", {}).get("revenue_model", "N/A"),
-            "go_to_market": circuit.get("selected_idea", {}).get("go_to_market", "N/A"),
-            "feasibility_score": analysis.get("feasibility", {}).get("score") or 0,
-            "risks": analysis.get("risks") or [],
-            "improvement_suggestions": analysis.get("improvements") or analysis.get("suggestions") or "",
-            "strategy": analysis.get("why_it_will_succeed") or analysis.get("why_it_will_fail") or "",
+                "target_customers": target_customers,
+                "business_model": business_model,
+            }),
+            "market_study": analysis.get("market_insights") or analysis.get("market_potential") or analysis.get("market_study") or "No detailed market insights available yet.",
+            "competition_level": analysis.get("competition_level"),
+            "competitors": analysis.get("competitors") or ["No existing competitors found"],
+            "revenue_model": analysis.get("revenue_model") or analysis.get("business_model") or "No clear revenue model found; consider SaaS/subscription, marketplace fees, or freemium upgrades.",
+            "go_to_market": analysis.get("go_to_market") or "",
+            "feasibility_score": (analysis.get("feasibility", {}).get("score") if isinstance(analysis.get("feasibility"), dict) else analysis.get("feasibility_score")) or 0,
+            "strengths": analysis.get("strengths") or [],
+            "weaknesses": analysis.get("weaknesses") or [],
+            "verdict": analysis.get("verdict") or "",
+            "risks": analysis.get("risks") or analysis.get("weaknesses") or [],
+            "improvement_suggestions": analysis.get("improvements") or analysis.get("suggestions") or [],
+            "strategy": analysis.get("why_it_will_succeed") or analysis.get("why_it_will_fail") or analysis.get("verdict") or "",
+            "raw_analysis": analysis,
+            "scraped_data": None,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

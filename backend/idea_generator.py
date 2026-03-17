@@ -1,87 +1,110 @@
-from dotenv import load_dotenv
-from pydantic import BaseModel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain.agents import create_agent
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
-load_dotenv()
-class StartupIdea(BaseModel):
-    name: str
-    description: str
-    target_market: str
-    search_keywords: list[str]
-    revenue_model: str
+try:
+    from pydantic import BaseModel
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import PydanticOutputParser
+    from langchain.agents import create_agent
+    HAS_LANGCHAIN = True
+except Exception as e:
+    print("?? Optional langchain/pydantic dependencies not installed:", e)
+    HAS_LANGCHAIN = False
 
-class StartupIdeas(BaseModel):
-    industry: str
-    ideas: list[StartupIdea]
+if load_dotenv:
+    load_dotenv()
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash"
-)
 
-parser= PydanticOutputParser(pydantic_object=StartupIdeas)
+def idea_generator_fallback(industry):
+    print("?? idea_generator fallback active")
+    return {
+        "industry": industry,
+        "ideas": [
+            {
+                "name": f"{industry} Starter",
+                "description": f"A simple startup idea in {industry} based on minimal fallback logic.",
+                "target_market": "SMBs",
+                "search_keywords": [f"{industry} solution", f"{industry} startup"],
+                "revenue_model": "Subscription",
+            }
+        ]
+    }
 
-prompt = f"""
-You are an expert startup strategist, VC analyst, and product builder.
 
-Your task is to generate HIGH-QUALITY, REALISTIC, and EXECUTABLE startup ideas based on a given industry domain.
+if HAS_LANGCHAIN:
+    class StartupIdea(BaseModel):
+        name: str
+        description: str
+        target_market: str
+        search_keywords: list[str]
+        revenue_model: str
 
-IMPORTANT:
-These ideas will be used for further market research and competitor analysis using web scraping.
-So ensure ideas are CLEAR, SPECIFIC, and SEARCHABLE.
+    class StartupIdeas(BaseModel):
+        industry: str
+        ideas: list[StartupIdea]
 
-Follow these principles:
-- Focus on REAL problems, not generic ideas
-- Ensure feasibility with current technology
-- Avoid vague buzzwords (like "AI platform for everything")
-- Make ideas specific enough to search for competitors
-- Prefer ideas that can be built by a small team (0 → 1 stage startup)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
-For each idea, include:
+    parser = PydanticOutputParser(pydantic_object=StartupIdeas)
 
-1. Name:
-   - Short, clear, and descriptive
-   - Should hint at the problem/solution
+    prompt = f"""
+    You are an expert startup strategist, VC analyst, and product builder.
 
-2. Description:
-   - Problem (1–2 lines)
-   - Solution (2–3 lines)
-   - How it works (MVP level explanation)
-   - Keep it concise but informative
+    Your task is to generate HIGH-QUALITY, REALISTIC, and EXECUTABLE startup ideas based on a given industry domain.
 
-3. Target Market:
-   - Very specific user segment (not broad like "everyone")
+    IMPORTANT:
+    These ideas will be used for further market research and competitor analysis using web scraping.
+    So ensure ideas are CLEAR, SPECIFIC, and SEARCHABLE.
 
-4. Search Keywords:
-   - 5–8 keywords or phrases that can be used to find competitors
-   - Example: "AI fitness app", "virtual personal trainer startup", etc.
+    Follow these principles:
+    - Focus on REAL problems, not generic ideas
+    - Ensure feasibility with current technology
+    - Avoid vague buzzwords (like "AI platform for everything")
+    - Make ideas specific enough to search for competitors
+    - Prefer ideas that can be built by a small team (0 to 1 stage startup)
 
-5. Revenue Model:
-   - How the startup makes money (subscription, SaaS, commission, etc.)
+    For each idea, include:
 
-Think deeply before answering.
-Prioritize QUALITY over quantity.
+    1. Name:
+       - Short, clear, and descriptive
+       - Should hint at the problem/solution
 
-Return ONLY JSON in the following format:
-{parser.get_format_instructions()}
-"""
+    2. Description:
+       - Problem (1-2 lines)
+       - Solution (2-3 lines)
+       - How it works (MVP level explanation)
+       - Keep it concise but informative
 
-agent = create_agent(
-    model=llm,
-    system_prompt = prompt,
-    tools=[]
-)
+    3. Target Market:
+       - Very specific user segment (not broad like "everyone")
 
-def idea_generator(industry):
-    raw_response = agent.invoke({"messages": [{"role": "user","content": f"Generate startup ideas in the {industry} AI industry"}]})
+    4. Search Keywords:
+       - 5�8 keywords or phrases that can be used to find competitors
+       - Example: "AI fitness app", "virtual personal trainer startup", etc.
 
-    output_text=raw_response["messages"][-1].content
+    5. Revenue Model:
+       - How the startup makes money (subscription, SaaS, commission, etc.)
 
-    try:
-        structured_response = parser.parse(output_text)
-        return structured_response.model_dump()
-    except Exception as e:
-        print("Parsing Error:", e)
-        return {"error": "Failed to parse idea", "raw": output_text}
+    Think deeply before answering.
+    Prioritize QUALITY over quantity.
+
+    Return ONLY JSON in the following format:
+    {parser.get_format_instructions()}
+    """
+
+    agent = create_agent(model=llm, system_prompt=prompt, tools=[])
+
+    def idea_generator(industry):
+        raw_response = agent.invoke({"messages": [{"role": "user", "content": f"Generate startup ideas in the {industry} AI industry"}]})
+        output_text = raw_response["messages"][-1].content
+        try:
+            structured_response = parser.parse(output_text)
+            return structured_response.model_dump()
+        except Exception as e:
+            print("Parsing Error:", e)
+            return {"error": "Failed to parse idea", "raw": output_text}
+else:
+    idea_generator = idea_generator_fallback

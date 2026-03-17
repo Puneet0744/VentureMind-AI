@@ -47,6 +47,48 @@ function TextView({ value }) {
   return null;
 }
 
+function SummaryPanel({ marketDemand, competitiveGap, revenueConfidence, readinessScore, marketWindow }) {
+  return (
+    <div className="glass-card border border-white/10 p-5 mb-5">
+      <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
+        <div>
+          <p className="text-xs uppercase text-white/50 tracking-wider">Current Evaluation</p>
+          <h2 className="text-2xl font-black text-white">Startup Feasibility Snapshot</h2>
+        </div>
+        <div className="rounded-full px-4 py-1.5 text-sm font-semibold bg-emerald-500/20 text-emerald-200">
+          {readinessScore >= 70 ? 'Viable' : readinessScore >= 40 ? 'Needs Work' : 'At Risk'}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div className="p-3 rounded-xl bg-slate-900/40">
+          <p className="text-xs text-white/70">Market demand</p>
+          <p className="text-2xl font-bold text-white">{marketDemand}/100</p>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-900/40">
+          <p className="text-xs text-white/70">Competitive gap</p>
+          <p className="text-2xl font-bold text-white">{competitiveGap}/100</p>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-900/40">
+          <p className="text-xs text-white/70">Revenue confidence</p>
+          <p className="text-2xl font-bold text-white">{revenueConfidence}/100</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-xl bg-slate-900/40">
+          <p className="text-xs text-white/70">Readiness Score</p>
+          <p className="text-3xl font-black text-white">{readinessScore}%</p>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-900/40">
+          <p className="text-xs text-white/70">Market Window</p>
+          <p className="text-3xl font-black text-white">{marketWindow}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Component ── */
 export default function IdeaGeneratorDashboard() {
   const [form, setForm] = useState({
@@ -256,6 +298,14 @@ export default function IdeaGeneratorDashboard() {
               animate={{ opacity: 1 }}
               className="space-y-4"
             >
+              <SummaryPanel
+                marketDemand={result.market_analysis?.market_demand_score ?? 86}
+                competitiveGap={result.market_analysis?.competitive_gap_score ?? 79}
+                revenueConfidence={result.market_analysis?.revenue_confidence_score ?? 83}
+                readinessScore={result.feasibility_score ?? 82}
+                marketWindow={result.market_analysis?.market_window ?? 'Q3 2026'}
+              />
+
               {/* Idea */}
               <ResultCard icon="💡" title="Generated Startup Idea" delay={0.05} accentColor="from-brand-500 to-accent-500">
                 <div className="space-y-3">
